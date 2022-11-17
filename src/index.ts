@@ -1,12 +1,18 @@
 import express from "express";
-import { graphqlHTTP } from "express-graphql";
 import cors from "cors";
-import { DataSource } from "typeorm";
-import { Users } from "./Entities/Users";
 import { UserResolver } from "./UserResolver";
 import { buildSchema } from "type-graphql/dist/utils";
+import { ApolloServer } from "apollo-server-express";
+import { DataSource } from "typeorm";
+import { Users } from "./entitity/Users";
+import "dotenv/config";
 
 const main = async () => {
+  const app = express();
+  app.use(cors());
+  app.use(express.json());
+  app.get("/", (req, res) => res.send(""));
+
   const connection = new DataSource({
     type: "mysql",
     host: "localhost",
@@ -28,20 +34,17 @@ const main = async () => {
       console.error("Error during Data Source initialization", err);
     });
 
-  const app = express();
-  app.use(cors());
-  app.use(express.json());
-  app.use(
-    "/graphql",
-    graphqlHTTP({
-      schema: await buildSchema({
-        resolvers: [UserResolver],
-      }),
-      graphiql: true,
-    })
-  );
+  const apolloServer = new ApolloServer({
+    schema: await buildSchema({
+      resolvers: [UserResolver],
+    }),
+    context: ({ req, res }) => ({ req, res }),
+  });
 
-  app.listen(3001, () => {
+  await apolloServer.start();
+  apolloServer.applyMiddleware({ app, cors: false });
+
+  await app.listen(3001, () => {
     console.log("SERVER RUNNING PN PORT 3001");
   });
 };

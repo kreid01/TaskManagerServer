@@ -1,12 +1,60 @@
+import { expressMiddleware } from "@apollo/server/express4";
+import { sendRefreshToken } from "./utils/sendRefreshToken";
+import { createAccessToken, createRefreshToken } from "./utils/auth";
 import express from "express";
-import { graphqlHTTP } from "express-graphql";
 import cors from "cors";
+import { ApolloServer } from "@apollo/server";
 import { DataSource } from "typeorm";
-import { Users } from "./Entities/Users";
-import { UserResolver } from "./UserResolver";
-import { buildSchema } from "type-graphql/dist/utils";
+import { Users } from "./entitity/Users";
+import "dotenv/config";
+import cookieParser from "cookie-parser";
+import { verify } from "jsonwebtoken";
+import { json } from "body-parser";
+import http from "http";
+import { UserResolver } from "./resolvers/resolvers";
+import { buildSchema } from "type-graphql";
 
 const main = async () => {
+  const app = express();
+  app.use(
+    cors({
+      origin: "http://localhost:3000",
+      credentials: true,
+    })
+  );
+  app.use(cookieParser());
+  const httpServer = http.createServer(app);
+
+  app.get("/", (_req, res) => res.send(""));
+
+  app.post("/refresh_token", async (req, res) => {
+    const token = req.cookies.jid;
+    if (!token) {
+      return res.send({ ok: false, accessToken: "" });
+    }
+    let payload: any = null;
+    try {
+      payload = verify(token, process.env.REFRESH_TOKEN_SECRET!);
+    } catch (err) {
+      console.log(err);
+      return res.send({ ok: false, accessToken: "" });
+    }
+
+    const user = await Users.findOneBy({ id: payload.userId });
+
+    if (!user) {
+      return res.send({ ok: false, accessToken: "" });
+    }
+
+    if (user.tokenVersion !== payload.tokenVersion) {
+      return res.send({ ok: false, accessToken: "" });
+    }
+
+    sendRefreshToken(res, createRefreshToken(user));
+
+    return res.send({ ok: true, accessToken: createAccessToken(user) });
+  });
+
   const connection = new DataSource({
     type: "mysql",
     host: "localhost",
@@ -28,22 +76,31 @@ const main = async () => {
       console.error("Error during Data Source initialization", err);
     });
 
-  const app = express();
-  app.use(cors());
-  app.use(express.json());
+  interface MyContext {
+    token?: String;
+  }
+
+  const server = new ApolloServer<MyContext>({
+    schema: await buildSchema({
+      resolvers: [UserResolver],
+    }),
+  });
+
+  await server.start();
   app.use(
     "/graphql",
-    graphqlHTTP({
-      schema: await buildSchema({
-        resolvers: [UserResolver],
-      }),
-      graphiql: true,
+    json(),
+    expressMiddleware(server, {
+      context: async ({ req, res }) => ({ req, res }),
+    }),
+    cors({
+      origin: ["http://localhost:3000", "http://localhost:3001/graphql"],
     })
   );
 
-  app.listen(3001, () => {
-    console.log("SERVER RUNNING PN PORT 3001");
-  });
+  await new Promise<void>((resolve) =>
+    httpServer.listen({ port: 3001 }, resolve)
+  );
 };
 
 main().catch((err) => {

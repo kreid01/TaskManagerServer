@@ -46,7 +46,7 @@ export class UserResolver {
   }
 
   @Query(() => Users, { nullable: true })
-  me(@Ctx() context: MyContext) {
+  async getUser(@Ctx() context: MyContext) {
     const authorization = context.req.headers["authorization"];
 
     if (!authorization) {
@@ -56,7 +56,7 @@ export class UserResolver {
     try {
       const token = authorization.split(" ")[1];
       const payload: any = verify(token, process.env.ACCESS_TOKEN_SECRET!);
-      return Users.findOne(payload.userId);
+      return await Users.findOneById(payload.userId);
     } catch (err) {
       console.log(err);
       return null;

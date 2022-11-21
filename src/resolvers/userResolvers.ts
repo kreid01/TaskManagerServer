@@ -29,11 +29,6 @@ class LoginResponse {
 @Resolver()
 export class UserResolver {
   @Query(() => String)
-  hello() {
-    return "hi!";
-  }
-
-  @Query(() => String)
   @UseMiddleware(isAuth)
   bye(@Ctx() { payload }: MyContext) {
     console.log(payload);
@@ -43,6 +38,17 @@ export class UserResolver {
   @Query(() => [Users])
   users() {
     return Users.find();
+  }
+
+  @Query(() => [Users])
+  async searchUsers(@Arg("search") search: string) {
+    const users = await Users.find();
+
+    return await users.filter(
+      (user) =>
+        user.firstName.toLocaleLowerCase().includes(search.toLowerCase()) ||
+        user.lastName.toLocaleLowerCase().includes(search.toLowerCase())
+    );
   }
 
   @Query(() => Users, { nullable: true })
@@ -103,6 +109,16 @@ export class UserResolver {
       accessToken: createAccessToken(user),
       user,
     };
+  }
+
+  @Mutation(() => Boolean)
+  async deleteUser(@Arg("id") id: number) {
+    try {
+      await Users.delete(id);
+    } catch (err) {
+      console.log(err);
+    }
+    return true;
   }
 
   @Mutation(() => Boolean)

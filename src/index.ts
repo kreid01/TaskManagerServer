@@ -11,8 +11,10 @@ import cookieParser from "cookie-parser";
 import { verify } from "jsonwebtoken";
 import { json } from "body-parser";
 import http from "http";
-import { UserResolver } from "./resolvers/resolvers";
+import { UserResolver } from "./resolvers/userResolvers";
+import { TeamResolver } from "./resolvers/teamResolvers";
 import { buildSchema } from "type-graphql";
+import { Teams } from "./entitity/Teams";
 
 const main = async () => {
   const app = express();
@@ -64,7 +66,7 @@ const main = async () => {
     database: "managementdb",
     logging: true,
     synchronize: false,
-    entities: [Users],
+    entities: [Users, Teams],
   });
 
   connection
@@ -82,7 +84,7 @@ const main = async () => {
 
   const server = new ApolloServer<MyContext>({
     schema: await buildSchema({
-      resolvers: [UserResolver],
+      resolvers: [UserResolver, TeamResolver],
     }),
   });
 

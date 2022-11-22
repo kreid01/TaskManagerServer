@@ -24,6 +24,26 @@ export class TeamResolver {
   }
 
   @Query(() => [Teams])
+  async getProjectTeams(@Arg("teams") teams: string) {
+    const teamIds = teams.split(", ");
+
+    const projectTeams = teamIds.map(async (id) => {
+      return (await Teams.findOneById(parseInt(id))) as Teams;
+    });
+
+    return projectTeams;
+  }
+
+  @Query(() => [Teams])
+  async searchTeams(@Arg("search") search: string) {
+    const teams = await Teams.find();
+
+    return await teams.filter((team) =>
+      team.teamName.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  @Query(() => [Teams])
   async getUsersTeams(@Arg("id") userId: number) {
     const teams = await Teams.find();
     const teamsNew = teams.map((team) => {

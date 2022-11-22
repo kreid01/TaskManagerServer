@@ -12,6 +12,7 @@ import {
   Int,
   Ctx,
   UseMiddleware,
+  Args,
 } from "type-graphql";
 import { compare, hash } from "bcryptjs";
 import { Users } from "../entitity/Users";
@@ -38,6 +39,17 @@ export class UserResolver {
   @Query(() => [Users])
   users() {
     return Users.find();
+  }
+
+  @Query(() => [Users])
+  async getTeamMembers(@Arg("team") team: string) {
+    const membersIds = team.split(", ");
+
+    const members = membersIds.map(async (id) => {
+      return (await Users.findOneById(parseInt(id))) as Users;
+    });
+
+    return members;
   }
 
   @Query(() => [Users])

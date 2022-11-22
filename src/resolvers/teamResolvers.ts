@@ -3,11 +3,6 @@ import { Teams } from "../entitity/Teams";
 
 @Resolver()
 export class TeamResolver {
-  @Query(() => [Teams])
-  users() {
-    return Teams.find();
-  }
-
   @Mutation(() => Boolean)
   async deleteTeam(@Arg("id") id: number) {
     try {
@@ -21,6 +16,11 @@ export class TeamResolver {
   @Query(() => [Teams])
   teams() {
     return Teams.find();
+  }
+
+  @Query(() => Teams)
+  async getTeam(@Arg("id") id: number) {
+    return await Teams.findOneById(id);
   }
 
   @Query(() => [Teams])

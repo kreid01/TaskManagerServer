@@ -12,7 +12,6 @@ import {
   Int,
   Ctx,
   UseMiddleware,
-  Args,
 } from "type-graphql";
 import { compare, hash } from "bcryptjs";
 import { Users } from "../entitity/Users";

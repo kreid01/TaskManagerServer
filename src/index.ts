@@ -1,3 +1,4 @@
+import { ProjectResolver } from "./resolvers/projectRevolver";
 import { expressMiddleware } from "@apollo/server/express4";
 import { sendRefreshToken } from "./utils/sendRefreshToken";
 import { createAccessToken, createRefreshToken } from "./utils/auth";
@@ -15,6 +16,7 @@ import { UserResolver } from "./resolvers/userResolvers";
 import { TeamResolver } from "./resolvers/teamResolvers";
 import { buildSchema } from "type-graphql";
 import { Teams } from "./entitity/Teams";
+import { Projects } from "./entitity/Projects";
 
 const main = async () => {
   const app = express();
@@ -65,8 +67,8 @@ const main = async () => {
     password: "kiki8kiki8",
     database: "managementdb",
     logging: true,
-    synchronize: false,
-    entities: [Users, Teams],
+    synchronize: true,
+    entities: [Users, Teams, Projects],
   });
 
   connection
@@ -84,7 +86,7 @@ const main = async () => {
 
   const server = new ApolloServer<MyContext>({
     schema: await buildSchema({
-      resolvers: [UserResolver, TeamResolver],
+      resolvers: [UserResolver, TeamResolver, ProjectResolver],
     }),
   });
 

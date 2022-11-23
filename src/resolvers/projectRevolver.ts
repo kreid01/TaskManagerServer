@@ -51,7 +51,17 @@ export class ProjectResolver {
     });
 
     return usersProjects;
-  }
+  
+}
+
+@Query(() => [Projects])
+async getTeamProjects(@Arg("id") teamId: number) {
+  const projects = await Projects.find();
+
+  return projects.filter((projects) =>
+    projects.teams.includes(teamId.toString())
+  );
+}
 
   @Mutation(() => Boolean)
   async createProject(

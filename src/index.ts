@@ -17,6 +17,8 @@ import { TeamResolver } from "./resolvers/teamResolvers";
 import { buildSchema } from "type-graphql";
 import { Teams } from "./entitity/Teams";
 import { Projects } from "./entitity/Projects";
+import { Tasks } from "./entitity/Tasks";
+import { TaskResolver } from "./resolvers/taskResolver";
 
 const main = async () => {
   const app = express();
@@ -67,8 +69,8 @@ const main = async () => {
     password: "kiki8kiki8",
     database: "managementdb",
     logging: true,
-    synchronize: true,
-    entities: [Users, Teams, Projects],
+    synchronize: false,
+    entities: [Users, Teams, Projects, Tasks],
   });
 
   connection
@@ -86,7 +88,7 @@ const main = async () => {
 
   const server = new ApolloServer<MyContext>({
     schema: await buildSchema({
-      resolvers: [UserResolver, TeamResolver, ProjectResolver],
+      resolvers: [UserResolver, TeamResolver, ProjectResolver, TaskResolver],
     }),
   });
 

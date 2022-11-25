@@ -76,6 +76,19 @@ export class TaskResolver {
   }
 
   @Mutation(() => Boolean)
+  async deleteTeamTasks(@Arg("id") teamId: number) {
+    const tasks = await Tasks.find();
+
+    await tasks.map(async (task) => {
+      if (task.teamId === teamId) {
+        await Tasks.delete({ id: task.id });
+      }
+    });
+
+    return true;
+  }
+
+  @Mutation(() => Boolean)
   async createTask(
     @Arg("creator") creator: number,
     @Arg("taskName") taskName: string,

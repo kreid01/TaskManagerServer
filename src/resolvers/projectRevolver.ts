@@ -25,12 +25,24 @@ export class ProjectResolver {
   }
 
   @Mutation(() => Projects)
-  async updateProject(@Arg("id") id: number, @Arg("tasks") teams: string) {
+  async updateProjectTeams(@Arg("id") id: number, @Arg("teams") teams: string) {
     const team = await Projects.findOneBy({ id: id });
 
     await Projects.update({ id: id }, { teams: teams });
 
     return team;
+  }
+
+  @Mutation(() => Boolean)
+  async removeTeamFromProjects(@Arg("id") id: number) {
+    const projects = await Projects.find();
+
+    await projects.map(async (project) => {
+      const teams = project.teams.replace(`${id},`, "");
+      await Projects.update({ id: project.id }, { teams: teams });
+    });
+
+    return true;
   }
 
   @Query(() => [Projects])
@@ -51,17 +63,16 @@ export class ProjectResolver {
     });
 
     return usersProjects;
-  
-}
+  }
 
-@Query(() => [Projects])
-async getTeamProjects(@Arg("id") teamId: number) {
-  const projects = await Projects.find();
+  @Query(() => [Projects])
+  async getTeamProjects(@Arg("id") teamId: number) {
+    const projects = await Projects.find();
 
-  return projects.filter((projects) =>
-    projects.teams.includes(teamId.toString())
-  );
-}
+    return projects.filter((projects) =>
+      projects.teams.includes(teamId.toString())
+    );
+  }
 
   @Mutation(() => Boolean)
   async createProject(

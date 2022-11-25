@@ -1,9 +1,9 @@
 import { ProjectResolver } from "./resolvers/projectRevolver";
-import { expressMiddleware } from "@apollo/server/express4";
 import { sendRefreshToken } from "./utils/sendRefreshToken";
 import { createAccessToken, createRefreshToken } from "./utils/auth";
 import express from "express";
 import cors from "cors";
+import { expressMiddleware } from "@apollo/server/express4";
 import { ApolloServer } from "@apollo/server";
 import { DataSource } from "typeorm";
 import { Users } from "./entitity/Users";
@@ -63,10 +63,10 @@ const main = async () => {
 
   const connection = new DataSource({
     type: "mysql",
-    host: "localhost",
+    host: "db",
     port: 3306,
     username: "root",
-    password: "kiki8kiki8",
+    password: process.env.MYSQL_ROOT_PASSWORD,
     database: "managementdb",
     logging: true,
     synchronize: false,
@@ -93,6 +93,7 @@ const main = async () => {
   });
 
   await server.start();
+
   app.use(
     "/graphql",
     json(),
@@ -100,12 +101,12 @@ const main = async () => {
       context: async ({ req, res }) => ({ req, res }),
     }),
     cors({
-      origin: ["http://localhost:3000", "http://localhost:3001/graphql"],
+      origin: ["http://localhost:3000", "http://localhost:4000/graphql"],
     })
   );
 
   await new Promise<void>((resolve) =>
-    httpServer.listen({ port: 3001 }, resolve)
+    httpServer.listen({ port: 4000 }, resolve)
   );
 };
 

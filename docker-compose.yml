@@ -1,0 +1,17 @@
+version: "3.7"
+services:   
+  db:
+    image: mysql:latest
+    environment: 
+      MYSQL_ROOT_PASSWORD: kiki8kiki8
+    volumes:
+      - ./mysql:/var/lib/mysql
+    ports:
+      - "3307:3306"   
+  web:
+    image: tasker  
+    depends_on:
+        - db
+    ports: 
+        - "4000:4000"
+

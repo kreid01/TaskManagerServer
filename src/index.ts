@@ -22,88 +22,84 @@ import { TaskResolver } from "./resolvers/taskResolver";
 
 const main = async () => {
   const app = express();
-  app.use(
-    cors({
-      origin: "http://localhost:3000",
-      credentials: true,
-    })
-  );
+
   app.use(cookieParser());
-  const httpServer = http.createServer(app);
+   app.use(
+     cors({
+       origin: "http://localhost:3000",
+       credentials: true,
+     })
+   );
+   const httpServer = http.createServer(app);
+   app.get("/", (_req, res) => res.send(""));
 
-  app.get("/", (_req, res) => res.send(""));
+   app.post("/refresh_token", async (req, res) => {
+     const token = req.cookies.reksat;
+     if (!token) {
+       return res.send({ ok: false, accessToken: "" });
+     }
+     let payload: any = null;
+     try {
+       payload = verify(token, process.env.REFRESH_TOKEN_SECRET!);
+     } catch (err) {
+       console.log(err);
+       return res.send({ ok: false, accessToken: "" });
+     }
 
-  app.post("/refresh_token", async (req, res) => {
-    const token = req.cookies.jid;
-    if (!token) {
-      return res.send({ ok: false, accessToken: "" });
-    }
-    let payload: any = null;
-    try {
-      payload = verify(token, process.env.REFRESH_TOKEN_SECRET!);
-    } catch (err) {
-      console.log(err);
-      return res.send({ ok: false, accessToken: "" });
-    }
+     const user = await Users.findOneBy({ id: payload.userId });
 
-    const user = await Users.findOneBy({ id: payload.userId });
+     if (!user) {
+       return res.send({ ok: false, accessToken: "" });
+     }
 
-    if (!user) {
-      return res.send({ ok: false, accessToken: "" });
-    }
+     if (user.tokenVersion !== payload.tokenVersion) {
+       return res.send({ ok: false, accessToken: "" });
+     }
 
-    if (user.tokenVersion !== payload.tokenVersion) {
-      return res.send({ ok: false, accessToken: "" });
-    }
+     sendRefreshToken(res, createRefreshToken(user));
 
-    sendRefreshToken(res, createRefreshToken(user));
+     return res.send({ ok: true, accessToken: createAccessToken(user) });
+   });
 
-    return res.send({ ok: true, accessToken: createAccessToken(user) });
-  });
+   const connection = new DataSource({
+     type: "mysql",
+     host: "db",
+     port: 3306,
+     username: "mysql",
+     password: "kiki8kiki8",
+     database: "managementdb",
+     logging: true,
+     synchronize: true,
+     entities: [Users, Teams, Projects, Tasks],
+   });
 
-  const connection = new DataSource({
-    type: "mysql",
-    host: "db",
-    port: 3306,
-    username: "root",
-    password: process.env.MYSQL_ROOT_PASSWORD,
-    database: "managementdb",
-    logging: true,
-    synchronize: false,
-    entities: [Users, Teams, Projects, Tasks],
-  });
+   await connection
+     .initialize()
+     .then(() => {
+       console.log("Data Source has been initialized!");
+     })
+     .catch((err) => {
+       console.error("Error during Data Source initialization", err);
+     });
 
-  connection
-    .initialize()
-    .then(() => {
-      console.log("Data Source has been initialized!");
-    })
-    .catch((err) => {
-      console.error("Error during Data Source initialization", err);
-    });
+   interface MyContext {
+     token?: String;
+   }
 
-  interface MyContext {
-    token?: String;
-  }
+   const server = new ApolloServer<MyContext>({
+     schema: await buildSchema({
+       resolvers: [UserResolver, TeamResolver, ProjectResolver, TaskResolver],
+     }),
+   });
 
-  const server = new ApolloServer<MyContext>({
-    schema: await buildSchema({
-      resolvers: [UserResolver, TeamResolver, ProjectResolver, TaskResolver],
-    }),
-  });
-
-  await server.start();
-
-  app.use(
-    "/graphql",
-    json(),
-    expressMiddleware(server, {
-      context: async ({ req, res }) => ({ req, res }),
-    }),
-    cors({
-      origin: ["http://localhost:3000", "http://localhost:4000/graphql"],
-    })
-  );
+   await server.start();
+   app.use(
+     "/graphql",
+     json(),
+     expressMiddleware(server, {
+       context: async ({ req, res }) => ({ req, res }),
+     })
+   );
 
   await new Promise<void>((resolve) =>
     httpServer.listen({ port: 4000 }, resolve)

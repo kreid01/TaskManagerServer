@@ -1,5 +1,5 @@
 FROM node as build
-WORKDIR /user/app
+WORKDIR /usr/app
 COPY package*.json ./
 RUN npm install --force
 COPY . .
@@ -10,11 +10,13 @@ WORKDIR /usr/app
 COPY package*.json ./
 RUN npm install --production --force
 
-COPY --from=build /user/app/dist ./dist
+COPY --from=build /usr/app/dist ./dist
+COPY ./wait-for-it.sh ./dist
+COPY .env ./dist
+RUN chmod +x ./dist/wait-for-it.sh .
 
-COPY .env ./dist/
 WORKDIR ./dist
 
 EXPOSE 4000
 
-CMD node index.js
+CMD node  index.js

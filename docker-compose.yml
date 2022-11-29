@@ -2,16 +2,22 @@ version: "3.7"
 services:   
   db:
     image: mysql:latest
-    environment: 
+    environment:
+      MYSQL_USER: mysql
       MYSQL_ROOT_PASSWORD: kiki8kiki8
+      MYSQL_DATABASE: managementdb
+      MYSQL_PASSWORD: kiki8kiki8
     volumes:
       - ./mysql:/var/lib/mysql
     ports:
-      - "3307:3306"   
+      - "3307:3306"  
+    expose: 
+      - "3306" 
+    restart: always 
   web:
     image: tasker  
     depends_on:
-        - db
+      - db
+    command: ["./wait-for-it.sh", "db:3306", "--", "node", "index.js"]
     ports: 
-        - "4000:4000"
-
+        - "4001:4000"

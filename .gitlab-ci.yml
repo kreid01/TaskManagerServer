@@ -6,6 +6,6 @@ deploy:
         - chmod 400 $SSH_KEY
     script: 
         - ssh -o StrictHostKeyChecking=no -i $SSH_KEY root@167.99.86.251 "
-            docker login -u $REGISTRY_USER -p $REGISTRY_PASS && cd / && cd TaskManagementServer &&
+            docker login -u $REGISTRY_USER -p $REGISTRY_PASS && cd / && cd TaskManagerServer &&
             docker-compose down && git pull && docker build -t tasker . &&
             docker-compose up -d"

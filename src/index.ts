@@ -63,9 +63,9 @@ const main = async () => {
 
    const connection = new DataSource({
      type: "mysql",
-     host: "db",
+     host: "localhost",
      port: 3306,
-     username: "mysql",
+     username: "root",
      password: "kiki8kiki8",
      database: "managementdb",
      logging: true,

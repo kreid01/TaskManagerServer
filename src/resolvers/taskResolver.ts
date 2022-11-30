@@ -57,7 +57,7 @@ export class TaskResolver {
     const tasks = await Tasks.find();
 
     const usersTasks = tasks.map((task) => {
-      if (usersTeams.some((team) => team?.id === task.teamId)) return task;
+      if (usersTeams.filter((team) => team?.id === task.teamId)) return task;
     });
 
     return usersTasks;

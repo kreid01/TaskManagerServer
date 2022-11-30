@@ -14,11 +14,11 @@ export class Tasks extends BaseEntity {
 
   @Field(() => Int)
   @Column("int")
-  projectId: number;
+  projectId?: number;
 
   @Field(() => Int)
   @Column("int")
-  teamId: number;
+  teamId?: number;
 
   @Field(() => String)
   @Column("text")

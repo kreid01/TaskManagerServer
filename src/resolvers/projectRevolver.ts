@@ -1,6 +1,5 @@
 import { Resolver, Query, Mutation, Arg } from "type-graphql";
 import { Projects } from "../entitity/Projects";
-import { Teams } from "../entitity/Teams";
 
 @Resolver()
 export class ProjectResolver {
@@ -25,60 +24,46 @@ export class ProjectResolver {
   }
 
   @Mutation(() => Projects)
-  async updateProjectTeams(@Arg("id") id: number, @Arg("teams") teams: string) {
+  async updateProjectMembers(
+    @Arg("id") id: number,
+    @Arg("members") members: string
+  ) {
     const team = await Projects.findOneBy({ id: id });
 
-    await Projects.update({ id: id }, { teams: teams });
+    await Projects.update({ id: id }, { members: members });
 
     return team;
   }
 
-  @Mutation(() => Boolean)
-  async removeTeamFromProjects(@Arg("id") id: number) {
-    const projects = await Projects.find();
-
-    await projects.map(async (project) => {
-      const teams = project.teams.replace(`${id},`, "");
-      await Projects.update({ id: project.id }, { teams: teams });
-    });
-
-    return true;
-  }
-
   @Query(() => [Projects])
   async getUsersProjects(@Arg("id") userId: number) {
-    const teams = await Teams.find();
-    const usersTeams = teams.map((team) => {
-      if (team.members.includes(userId.toString())) return team;
-    });
-
     const projects = await Projects.find();
 
-    const usersProjects = projects.map((project) => {
-      if (
-        project.projectLead === userId ||
-        teams.some((team) => team.members.includes(userId.toString()))
-      )
-        return project;
-    });
-
-    return usersProjects;
+    const userProjects = projects.filter(
+      (project) =>
+        project.members.includes(userId.toString()) ||
+        project.projectLead === userId
+    );
+    return userProjects;
   }
 
   @Query(() => [Projects])
-  async getTeamProjects(@Arg("id") teamId: number) {
+  async searchProjects(@Arg("search") search: string) {
     const projects = await Projects.find();
 
-    return projects.filter((projects) =>
-      projects.teams.includes(teamId.toString())
+    const searchedProjects = projects.filter((project) =>
+      project.projectName.toLowerCase().includes(search.toLowerCase())
     );
+
+    return searchedProjects;
   }
 
   @Mutation(() => Boolean)
   async createProject(
     @Arg("projectLead") projectLead: number,
     @Arg("projectName") projectName: string,
-    @Arg("teams") teams: string
+    @Arg("members") members: string,
+    @Arg("completeDate") completeDate: string
   ) {
     try {
       const date = new Date().toString();
@@ -86,7 +71,9 @@ export class ProjectResolver {
       await Projects.insert({
         projectLead: projectLead,
         projectName: projectName,
-        teams: teams,
+        members: members,
+        completeDate: completeDate,
+        isComplete: false,
         created: date,
       });
     } catch (err) {

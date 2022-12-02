@@ -17,6 +17,7 @@ import { compare, hash } from "bcryptjs";
 import { Users } from "../entitity/Users";
 import { getConnection } from "typeorm";
 import { verify } from "jsonwebtoken";
+import Redis from "redis";
 
 @ObjectType()
 class LoginResponse {
@@ -115,7 +116,6 @@ export class UserResolver {
     }
 
     sendRefreshToken(res, createRefreshToken(user));
-
     return {
       accessToken: createAccessToken(user),
       user,

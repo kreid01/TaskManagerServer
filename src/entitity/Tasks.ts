@@ -16,10 +16,6 @@ export class Tasks extends BaseEntity {
   @Column("int")
   projectId?: number;
 
-  @Field(() => Int)
-  @Column("int")
-  teamId?: number;
-
   @Field(() => String)
   @Column("text")
   taskName: string;
@@ -27,6 +23,10 @@ export class Tasks extends BaseEntity {
   @Field(() => String)
   @Column("text")
   completeDate: string;
+
+  @Field(() => String)
+  @Column("text")
+  members: string;
 
   @Field(() => Boolean)
   @Column("boolean")

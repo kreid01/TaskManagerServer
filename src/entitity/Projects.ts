@@ -18,7 +18,15 @@ export class Projects extends BaseEntity {
 
   @Field(() => String)
   @Column("text")
-  teams: string;
+  completeDate: string;
+
+  @Field(() => String)
+  @Column("text")
+  members: string;
+
+  @Field(() => Boolean)
+  @Column("boolean")
+  isComplete: boolean;
 
   @Field(() => String)
   @Column("text")

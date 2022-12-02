@@ -1,6 +1,5 @@
 import { Resolver, Query, Mutation, Arg } from "type-graphql";
 import { Tasks } from "../entitity/Tasks";
-import { Teams } from "../entitity/Teams";
 
 @Resolver()
 export class TaskResolver {
@@ -34,33 +33,15 @@ export class TaskResolver {
   }
 
   @Query(() => [Tasks])
-  async getTeamTasks(@Arg("id") id: number) {
-    const tasks = await Tasks.find();
-
-    const teamTasks = tasks.filter((task) => task.teamId === id);
-
-    return teamTasks;
-  }
-
-  @Query(() => [Tasks])
   async getUsersTasks(@Arg("id") userId: number) {
-    const teams = await Teams.find();
-    const usersTeams = teams.map((team) => {
-      if (
-        team.teamLead === userId ||
-        team.members.includes(userId.toString())
-      ) {
-        return team;
-      }
-    });
-
     const tasks = await Tasks.find();
 
-    const usersTasks = tasks.map((task) => {
-      if (usersTeams.filter((team) => team?.id === task.teamId)) return task;
-    });
+    const userTasks = tasks.filter(
+      (task) =>
+        task.members.includes(userId.toString()) || task.creator === userId
+    );
 
-    return usersTasks;
+    return userTasks;
   }
 
   @Mutation(() => Tasks)
@@ -76,24 +57,11 @@ export class TaskResolver {
   }
 
   @Mutation(() => Boolean)
-  async deleteTeamTasks(@Arg("id") teamId: number) {
-    const tasks = await Tasks.find();
-
-    await tasks.map(async (task) => {
-      if (task.teamId === teamId) {
-        await Tasks.delete({ id: task.id });
-      }
-    });
-
-    return true;
-  }
-
-  @Mutation(() => Boolean)
   async createTask(
     @Arg("creator") creator: number,
     @Arg("taskName") taskName: string,
     @Arg("completeDate") completeDate: string,
-    @Arg("teamId") teamId: number,
+    @Arg("members") members: string,
     @Arg("projectId") projectId: number
   ) {
     try {
@@ -102,8 +70,8 @@ export class TaskResolver {
       await Tasks.insert({
         creator: creator,
         taskName: taskName,
-        teamId: teamId,
         projectId: projectId,
+        members: members,
         isComplete: false,
         created: date,
         completeDate: completeDate,
